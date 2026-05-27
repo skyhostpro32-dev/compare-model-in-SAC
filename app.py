@@ -1,6 +1,6 @@
 import streamlit as st
 import json
-import os
+import pandas as pd
 
 from compare_engine import compare_stories
 
@@ -19,6 +19,7 @@ def load_css():
 
     try:
         with open("styles.css") as f:
+
             st.markdown(
                 f"<style>{f.read()}</style>",
                 unsafe_allow_html=True
@@ -37,103 +38,106 @@ st.title("📊 SAC Story Measurement Compare Tool")
 st.markdown("---")
 
 # =========================
-# LOAD JSON FILES
+# SIDEBAR
 # =========================
-try:
+st.sidebar.header("Upload SAC Story JSON")
 
-    with open("data/story_a.json", "r") as f:
-        story_a = json.load(f)
+story_a_file = st.sidebar.file_uploader(
+    "Upload Story A JSON",
+    type=["json"]
+)
 
-    with open("data/story_b.json", "r") as f:
-        story_b = json.load(f)
-
-except Exception as e:
-
-    st.error(f"Error loading JSON files: {e}")
-    st.stop()
-
-# =========================
-# COMPARE STORIES
-# =========================
-try:
-
-    df = compare_stories(
-        story_a,
-        story_b
-    )
-
-except Exception as e:
-
-    st.error(f"Comparison Error: {e}")
-    st.stop()
-
-# =========================
-# SHOW RESULT
-# =========================
-st.subheader("Comparison Result")
-
-st.dataframe(
-    df,
-    use_container_width=True
+story_b_file = st.sidebar.file_uploader(
+    "Upload Story B JSON",
+    type=["json"]
 )
 
 # =========================
-# SHOW DIFFERENCES
+# MAIN LOGIC
 # =========================
-try:
+if story_a_file and story_b_file:
 
-    different_rows = df[
-        df["Status"] == "Different"
-    ]
+    try:
 
-    if not different_rows.empty:
+        # LOAD JSON
+        story_a = json.load(story_a_file)
+        story_b = json.load(story_b_file)
 
-        st.warning("⚠ Differences Found")
+        # COMPARE
+        df = compare_stories(
+            story_a,
+            story_b
+        )
+
+        # =========================
+        # SHOW TABLE
+        # =========================
+        st.subheader("📋 Comparison Result")
 
         st.dataframe(
-            different_rows,
+            df,
             use_container_width=True
         )
 
-    else:
+        # =========================
+        # DIFFERENCE FILTER
+        # =========================
+        try:
 
-        st.success("✅ All Measurements Match")
+            different_rows = df[
+                df["Status"] == "Different"
+            ]
 
-except:
-    pass
+            st.markdown("---")
 
-# =========================
-# CREATE REPORTS FOLDER
-# =========================
-os.makedirs(
-    "reports",
-    exist_ok=True
-)
+            if not different_rows.empty:
 
-# =========================
-# EXPORT EXCEL
-# =========================
-try:
+                st.warning("⚠ Differences Found")
 
-    excel_path = "reports/comparison.xlsx"
+                st.dataframe(
+                    different_rows,
+                    use_container_width=True
+                )
 
-    df.to_excel(
-        excel_path,
-        index=False
-    )
+            else:
 
-    with open(excel_path, "rb") as file:
+                st.success("✅ All Measurements Match")
 
-        st.download_button(
-            label="⬇ Download Excel Report",
-            data=file,
-            file_name="comparison.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        except:
+            pass
 
-except Exception as e:
+        # =========================
+        # EXPORT EXCEL
+        # =========================
+        try:
 
-    st.error(f"Excel Export Error: {e}")
+            excel_path = "/tmp/comparison.xlsx"
+
+            df.to_excel(
+                excel_path,
+                index=False
+            )
+
+            with open(excel_path, "rb") as file:
+
+                st.download_button(
+                    label="⬇ Download Excel Report",
+                    data=file,
+                    file_name="comparison.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+
+        except Exception as e:
+
+            st.error(f"Excel Export Error: {e}")
+
+    except Exception as e:
+
+        st.error(f"Application Error: {e}")
+
+else:
+
+    st.info("⬅ Upload both JSON files to start comparison")
 
 # =========================
 # FOOTER
