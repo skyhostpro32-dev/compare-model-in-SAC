@@ -1,0 +1,17 @@
+{
+  "story": "Finance Story V2",
+  "widgets": [
+    {
+      "widget": "Chart_1",
+      "measure": "Revenue"
+    },
+    {
+      "widget": "Chart_2",
+      "measure": "Sales"
+    },
+    {
+      "widget": "Chart_3",
+      "measure": "Cost"
+    }
+  ]
+}
