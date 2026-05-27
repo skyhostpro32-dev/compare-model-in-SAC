@@ -113,15 +113,22 @@ excel_path = f"{report_folder}/comparison.xlsx"
 # =========================
 # EXPORT EXCEL
 # =========================
+
+# =========================
+# EXPORT EXCEL
+# =========================
 try:
 
-    excel_path = "reports/comparison.xlsx"
+    # SAFE STREAMLIT CLOUD PATH
+    excel_path = "/tmp/comparison.xlsx"
 
+    # SAVE EXCEL
     df.to_excel(
         excel_path,
         index=False
     )
 
+    # DOWNLOAD BUTTON
     with open(excel_path, "rb") as file:
 
         st.download_button(
@@ -134,7 +141,6 @@ try:
 except Exception as e:
 
     st.error(f"Excel Export Error: {e}")
-
 # =========================
 # FOOTER
 # =========================
