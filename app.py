@@ -2,83 +2,42 @@ import streamlit as st
 import json
 from compare_engine import compare_stories
 
-# =========================
 # PAGE CONFIG
-# =========================
 st.set_page_config(
     page_title="SAC Story Compare",
     layout="wide"
 )
 
-# =========================
-# LOAD CSS
-# =========================
-def load_css():
-    try:
-        with open("styles.css") as f:
-            st.markdown(
-                f"<style>{f.read()}</style>",
-                unsafe_allow_html=True
-            )
-    except:
-        pass
-
-load_css()
-
-# =========================
 # TITLE
-# =========================
 st.title("📊 SAC Story Measurement Compare Tool")
 
 st.markdown("---")
 
-# =========================
-# LOAD JSON FILES
-# =========================
-try:
+# LOAD JSON
+with open("data/story_a.json", "r") as f:
+    story_a = json.load(f)
 
-    with open("data/story_a.json", "r") as f:
-        story_a = json.load(f)
+with open("data/story_b.json", "r") as f:
+    story_b = json.load(f)
 
-    with open("data/story_b.json", "r") as f:
-        story_b = json.load(f)
+# COMPARE
+df = compare_stories(
+    story_a,
+    story_b
+)
 
-except Exception as e:
-
-    st.error(f"Error loading JSON files: {e}")
-    st.stop()
-
-# =========================
-# COMPARE STORIES
-# =========================
-try:
-
-    df = compare_stories(
-        story_a,
-        story_b
-    )
-
-except Exception as e:
-
-    st.error(f"Comparison Error: {e}")
-    st.stop()
-
-# =========================
-# SHOW RESULT
-# =========================
+# SHOW TABLE
 st.subheader("Comparison Result")
 
-# SIMPLE SAFE DATAFRAME
-# (No applymap styling errors)
 st.dataframe(
     df,
     use_container_width=True
 )
 
-# =========================
-# SHOW DIFFERENT ROWS
-# =========================
-different_rows = df[df["Status"] == "Different"]
+# DIFFERENCES
+different_rows = df[
+    df["Status"] == "Different"
+]
 
 if not different_rows.empty:
 
@@ -93,33 +52,23 @@ else:
 
     st.success("✅ All Measurements Match")
 
-# =========================
 # EXPORT EXCEL
-# =========================
-try:
+excel_path = "reports/comparison.xlsx"
 
-    excel_path = "reports/comparison.xlsx"
+df.to_excel(
+    excel_path,
+    index=False
+)
 
-    df.to_excel(
-        excel_path,
-        index=False
+with open(excel_path, "rb") as file:
+
+    st.download_button(
+        label="⬇ Download Excel Report",
+        data=file,
+        file_name="comparison.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
-    with open(excel_path, "rb") as file:
-
-        st.download_button(
-            label="⬇ Download Excel Report",
-            data=file,
-            file_name="comparison.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-
-except Exception as e:
-
-    st.error(f"Excel Export Error: {e}")
-
-# =========================
-# FOOTER
-# =========================
 st.markdown("---")
+
 st.caption("SAC Story Comparison Tool")
