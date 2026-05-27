@@ -105,10 +105,10 @@ except:
 # =========================
 # CREATE REPORTS FOLDER
 # =========================
-os.makedirs(
-    "reports",
-    exist_ok=True
-)
+# SAFE TEMP FOLDER
+report_folder = "/tmp"
+
+excel_path = f"{report_folder}/comparison.xlsx"
 
 # =========================
 # EXPORT EXCEL
