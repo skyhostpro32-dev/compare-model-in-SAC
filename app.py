@@ -2,83 +2,124 @@ import streamlit as st
 import json
 from compare_engine import compare_stories
 
+# =========================
 # PAGE CONFIG
+# =========================
 st.set_page_config(
     page_title="SAC Story Compare",
     layout="wide"
 )
 
+# =========================
 # LOAD CSS
+# =========================
 def load_css():
-    with open("styles.css") as f:
-        st.markdown(
-            f"<style>{f.read()}</style>",
-            unsafe_allow_html=True
-        )
+    try:
+        with open("styles.css") as f:
+            st.markdown(
+                f"<style>{f.read()}</style>",
+                unsafe_allow_html=True
+            )
+    except:
+        pass
 
 load_css()
 
+# =========================
 # TITLE
+# =========================
 st.title("📊 SAC Story Measurement Compare Tool")
 
 st.markdown("---")
 
+# =========================
 # LOAD JSON FILES
-with open("data/story_a.json", "r") as f:
-    story_a = json.load(f)
+# =========================
+try:
 
-with open("data/story_b.json", "r") as f:
-    story_b = json.load(f)
+    with open("data/story_a.json", "r") as f:
+        story_a = json.load(f)
 
+    with open("data/story_b.json", "r") as f:
+        story_b = json.load(f)
+
+except Exception as e:
+
+    st.error(f"Error loading JSON files: {e}")
+    st.stop()
+
+# =========================
 # COMPARE STORIES
-df = compare_stories(
-    story_a,
-    story_b
-)
+# =========================
+try:
 
-# STATUS COLOR FUNCTION
-def highlight_status(val):
+    df = compare_stories(
+        story_a,
+        story_b
+    )
 
-    if val == "Different":
-        return "background-color: #ffcccc; color: black;"
+except Exception as e:
 
-    elif val == "Same":
-        return "background-color: #ccffcc; color: black;"
+    st.error(f"Comparison Error: {e}")
+    st.stop()
 
-    return ""
-
-# FIXED PANDAS STYLE
-styled_df = df.style.map(
-    highlight_status,
-    subset=["Status"]
-)
-
-# DISPLAY TABLE
+# =========================
+# SHOW RESULT
+# =========================
 st.subheader("Comparison Result")
 
+# SIMPLE SAFE DATAFRAME
+# (No applymap styling errors)
 st.dataframe(
-    styled_df,
+    df,
     use_container_width=True
 )
 
-st.markdown("---")
+# =========================
+# SHOW DIFFERENT ROWS
+# =========================
+different_rows = df[df["Status"] == "Different"]
 
-# EXPORT EXCEL
-excel_path = "reports/comparison.xlsx"
+if not different_rows.empty:
 
-df.to_excel(
-    excel_path,
-    index=False
-)
+    st.warning("⚠ Differences Found")
 
-with open(excel_path, "rb") as file:
-
-    st.download_button(
-        label="⬇ Download Excel Report",
-        data=file,
-        file_name="comparison.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    st.dataframe(
+        different_rows,
+        use_container_width=True
     )
 
+else:
+
+    st.success("✅ All Measurements Match")
+
+# =========================
+# EXPORT EXCEL
+# =========================
+try:
+
+    excel_path = "reports/comparison.xlsx"
+
+    df.to_excel(
+        excel_path,
+        index=False
+    )
+
+    with open(excel_path, "rb") as file:
+
+        st.download_button(
+            label="⬇ Download Excel Report",
+            data=file,
+            file_name="comparison.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+except Exception as e:
+
+    st.error(f"Excel Export Error: {e}")
+
+# =========================
 # FOOTER
+# =========================
+st.markdown("---")
 st.caption("SAC Story Comparison Tool")
