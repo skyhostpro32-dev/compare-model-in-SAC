@@ -1,6 +1,5 @@
 import streamlit as st
 import json
-
 from compare_engine import compare_stories
 
 # PAGE CONFIG
@@ -22,42 +21,49 @@ load_css()
 # TITLE
 st.title("📊 SAC Story Measurement Compare Tool")
 
+st.markdown("---")
+
 # LOAD JSON FILES
-with open("data/story_a.json") as f:
+with open("data/story_a.json", "r") as f:
     story_a = json.load(f)
 
-with open("data/story_b.json") as f:
+with open("data/story_b.json", "r") as f:
     story_b = json.load(f)
 
-# COMPARE
+# COMPARE STORIES
 df = compare_stories(
     story_a,
     story_b
 )
 
-# COLOR STATUS
+# STATUS COLOR FUNCTION
 def highlight_status(val):
 
     if val == "Different":
-        return "background-color: #ffcccc"
+        return "background-color: #ffcccc; color: black;"
 
     elif val == "Same":
-        return "background-color: #ccffcc"
+        return "background-color: #ccffcc; color: black;"
 
     return ""
 
-styled_df = df.style.applymap(
+# FIXED PANDAS STYLE
+styled_df = df.style.map(
     highlight_status,
     subset=["Status"]
 )
 
-# SHOW TABLE
+# DISPLAY TABLE
+st.subheader("Comparison Result")
+
 st.dataframe(
     styled_df,
     use_container_width=True
 )
 
-# EXPORT
+st.markdown("---")
+
+# EXPORT EXCEL
 excel_path = "reports/comparison.xlsx"
 
 df.to_excel(
@@ -70,5 +76,9 @@ with open(excel_path, "rb") as file:
     st.download_button(
         label="⬇ Download Excel Report",
         data=file,
-        file_name="comparison.xlsx"
+        file_name="comparison.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
+# FOOTER
+st.caption("SAC Story Comparison Tool")
